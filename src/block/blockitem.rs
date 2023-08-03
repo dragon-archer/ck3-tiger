@@ -1,8 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use crate::block::{Block, Comparator, Eq::*, Field, BV};
 use crate::report::{error, error_info, ErrorKey};
 use crate::token::Token;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BlockItem {
     Value(Token),
     Block(Block),

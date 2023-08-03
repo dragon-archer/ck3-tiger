@@ -9,13 +9,15 @@ use std::path::{Path, PathBuf};
 use std::slice::SliceIndex;
 use std::sync::Arc;
 
+use serde::{Serialize, Deserialize};
+
 use crate::date::Date;
 use crate::fileset::{FileEntry, FileKind};
 use crate::pathtable::{PathTable, PathTableIndex};
 use crate::report::{error, error_info, untidy, ErrorKey};
 use crate::stringtable::StringTable;
 
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub struct Loc {
     pub path: PathTableIndex,
     pub kind: FileKind,
@@ -50,7 +52,7 @@ impl Loc {
 }
 
 /// A Token consists of a string (stored in a `StringTable`) and its location in the parsed files.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Token {
     s: &'static str,
     pub loc: Loc,

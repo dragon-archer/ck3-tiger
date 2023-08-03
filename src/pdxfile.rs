@@ -14,7 +14,7 @@ use encoding::{DecoderTrap, Encoding};
 
 use crate::block::Block;
 use crate::fileset::FileEntry;
-use crate::parse::pdxfile::parse_pdx;
+use crate::parse::pdxfile::parse_pdx_check_cache;
 #[cfg(feature = "ck3")]
 use crate::report::advice_info;
 use crate::report::{error_info, old_warn, ErrorKey};
@@ -54,17 +54,17 @@ impl PdxFile {
     /// Parse a UTF-8 file that has no BOM (Byte Order Marker).
     pub fn read_no_bom(entry: &FileEntry, fullpath: &Path) -> Option<Block> {
         let contents = Self::read_utf8(entry, fullpath)?;
-        Some(parse_pdx(entry, &contents))
+        Some(parse_pdx_check_cache(entry, &contents))
     }
 
     /// Parse a UTF-8 file that should start with a BOM (Byte Order Marker).
     pub fn read(entry: &FileEntry, fullpath: &Path) -> Option<Block> {
         let contents = Self::read_utf8(entry, fullpath)?;
         if let Some(bomless) = contents.strip_prefix('\u{feff}') {
-            Some(parse_pdx(entry, bomless))
+            Some(parse_pdx_check_cache(entry, bomless))
         } else {
             old_warn(entry, ErrorKey::Encoding, "file must start with a UTF-8 BOM");
-            Some(parse_pdx(entry, &contents))
+            Some(parse_pdx_check_cache(entry, &contents))
         }
     }
 
@@ -72,9 +72,9 @@ impl PdxFile {
     pub fn read_optional_bom(entry: &FileEntry, fullpath: &Path) -> Option<Block> {
         let contents = Self::read_utf8(entry, fullpath)?;
         if let Some(bomless) = contents.strip_prefix('\u{feff}') {
-            Some(parse_pdx(entry, bomless))
+            Some(parse_pdx_check_cache(entry, bomless))
         } else {
-            Some(parse_pdx(entry, &contents))
+            Some(parse_pdx_check_cache(entry, &contents))
         }
     }
 
@@ -91,9 +91,9 @@ impl PdxFile {
                 "file should not start with a UTF-8 BOM",
                 "This kind of file is expected to be in Windows-1252 encoding",
             );
-            Some(parse_pdx(entry, bomless))
+            Some(parse_pdx_check_cache(entry, bomless))
         } else {
-            Some(parse_pdx(entry, &contents))
+            Some(parse_pdx_check_cache(entry, &contents))
         }
     }
 }

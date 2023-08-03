@@ -5,13 +5,15 @@
 use std::mem::{swap, take};
 use std::path::PathBuf;
 
+use directories::ProjectDirs;
 use fnv::FnvHashMap;
+use serde::{Deserialize, Serialize};
+use xxhash_rust::xxh3::xxh3_128;
 
-use crate::block::Eq::Single;
-use crate::block::{Block, Comparator, BV};
+use crate::block::{Block, Comparator, BV, Eq::Single};
 use crate::fileset::{FileEntry, FileKind};
-use crate::report::{err, error, old_warn, untidy, warn_info, ErrorKey};
-use crate::stringtable::StringTable;
+use crate::report::{err, error, log, old_warn, untidy, warn_info, ErrorKey, LogReport};
+use crate::stringtable::{StringTable, BytesTable};
 use crate::token::{Loc, Token};
 
 /// ^Z is by convention an end-of-text marker, and the game engine treats it as such.
@@ -183,7 +185,7 @@ impl CharExt for char {
 
 /// Tracks the @-values defined in this file.
 /// Values starting with `@` are local to a file, and are evaluated at parse time.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 // TODO: rename this to LocalValues for consistency
 pub struct LocalMacros {
     /// @-values defined as numbers. Calculations can be done with these in `@[ ... ]` blocks.
@@ -809,7 +811,7 @@ pub fn parse_pdx_macro(inputs: &[Token], local_macros: LocalMacros) -> Block {
     parser.eof()
 }
 
-/// Parse a whole file into a `Block`.
+/// Parse a whole file into a [`Block`].
 ///
 /// There is a lot of code duplication between this function and [`parse_pdx_macro`], but it's for a
 /// good cause: this function uses the fact that all the input is in one big string to construct
@@ -1143,4 +1145,63 @@ fn split_macros(content: &Token) -> Vec<Token> {
     }
     vec.push(content.subtoken(last_pos.., last_loc));
     vec
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct CachedBlock {
+    magic: [u8; 4],
+    block: Block,
+    reports: Vec<LogReport>,
+}
+const CACHE_MAGIC: &[u8; 4] = b"TGR1";
+
+/// Parse a whole file into a [`Block`], but check the cache of parsed files first.
+/// If this file is in there, then just deserialize the [`Block`] from there instead.
+///
+/// The cache is based on a 128-bit non-cryptographic hash of the file contents.
+pub fn parse_pdx_check_cache(entry: &FileEntry, content: &str) -> Block {
+    let dirs = ProjectDirs::from("io.github.amtep", "amtep", "tiger-lib");
+    let hash = format!("{:0x}", xxh3_128(content.as_bytes()));
+
+    // Try to load the parse result from the cache
+    if let Some(dirs) = dirs {
+        let cachefile = dirs.cache_dir().join(hash);
+        if let Ok(serialized) = std::fs::read(cachefile) {
+            let serialized = BytesTable::store_owned(serialized);
+            match postcard::from_bytes::<CachedBlock>(serialized) {
+                Ok(cache) => {
+                    if &cache.magic == CACHE_MAGIC {
+                        for report in cache.reports {
+                            log(report);
+                        }
+                        return cache.block;
+                    }
+                }
+                // TODO: after debugging, make this silent.
+                Err(e) => {
+                    dbg!(e);
+                }
+            };
+        }
+    }
+
+    // If the above failed, just do a normal parse
+    let block = parse_pdx(entry, content);
+
+    // Now try to cache that result
+    if let Some(dirs) = dirs {
+        let cachefile = dirs.cache_dir().join(hash);
+        let cache = CachedBlock { magic: *CACHE_MAGIC, block, reports: Vec::new() };
+        let serialized = match postcard::to_stdvec(&cache) {
+            Ok(serialized) => serialized,
+            // TODO: after debugging, make this silent.
+            Err(e) => {
+                dbg!(e);
+                return block;
+            }
+        };
+        std::fs::write(cachefile, serialized);
+    }
+
+    block
 }

@@ -1,10 +1,12 @@
+use serde::{Serialize, Deserialize};
+
 use crate::block::Block;
 use crate::report::{error, ErrorKey};
 use crate::token::Token;
 
 /// `BV` is an component a `Field`, which represents keyed items in `Block`.
 /// It is itself either a `Block` or a single-token `Value`.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum BV {
     Value(Token),
     Block(Block),

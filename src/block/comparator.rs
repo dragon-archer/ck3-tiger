@@ -1,10 +1,12 @@
 use std::fmt::{Display, Error, Formatter};
 
+use serde::{Serialize, Deserialize};
+
 use crate::token::Token;
 
-use crate::block::comparator::Eq::*;
+use self::Eq::*;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Comparator {
     /// =, ?=, ==,
     Equals(Eq),
@@ -20,7 +22,7 @@ pub enum Comparator {
     AtLeast,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Eq {
     /// Notation: =
     /// Valid as an equality comparison operator, assignment operator and scope opener.

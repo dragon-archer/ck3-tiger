@@ -79,3 +79,19 @@ impl Chunk {
         unsafe { &*ptr }
     }
 }
+
+/// A global table for byte strings that are never deallocated, which allows `&'static` references to them.
+/// It's used to store serialized blocks so that `Token` values can be constructed with `&'static str` references.
+pub struct BytesTable {}
+
+impl BytesTable {
+    /// The "storage" is done by simply leaking the Vec.
+    /// The Vec itself doesn't stay in memory, but the byte slice it points to does.
+    pub fn store_owned(v: Vec<u8>) -> &'static [u8] {
+        // Go through a raw pointer in order to confuse the borrow checker.
+        // This allows us to return a &'static str.
+        let ptr: *const [u8] = &*v;
+        forget(v);
+        unsafe { &*ptr }
+    }
+}

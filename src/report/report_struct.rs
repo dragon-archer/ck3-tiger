@@ -1,11 +1,11 @@
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use strum_macros::{Display, EnumIter, EnumString, IntoStaticStr};
 
 use crate::report::ErrorKey;
 use crate::token::Loc;
 
 /// Describes a report about a potentially problematic situation that can be logged.
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LogReport {
     /// Used for choosing output colors and for filtering reports.
     pub severity: Severity,
@@ -32,7 +32,7 @@ impl LogReport {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PointedMessage {
     /// Which file and where in the file the error occurs.
     /// Might point to a whole file, rather than a specific location in the file.
@@ -73,6 +73,7 @@ impl PointedMessage {
     EnumString,
     EnumIter,
     Serialize,
+    Deserialize,
 )]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
@@ -126,6 +127,7 @@ impl Severity {
     EnumIter,
     EnumString,
     Serialize,
+    Deserialize,
 )]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]

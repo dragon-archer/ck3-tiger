@@ -1,8 +1,10 @@
+use serde::{Serialize, Deserialize};
+
 use crate::block::{Block, Comparator, Eq::*, BV};
 use crate::report::{error, ErrorKey};
 use crate::token::Token;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Field(pub Token, pub Comparator, pub BV);
 
 impl Field {

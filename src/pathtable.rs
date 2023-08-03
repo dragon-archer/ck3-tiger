@@ -9,9 +9,20 @@ use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 
 use once_cell::sync::Lazy;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(from = "&Path")]
+#[serde(into = "&Path")]
 pub struct PathTableIndex(u32);
+
+impl From<&Path> for PathTableIndex {
+    
+}
+
+impl Into<&Path> for PathTableIndex {
+
+}
 
 static PATHTABLE: Lazy<RwLock<PathTable>> = Lazy::new(|| RwLock::new(PathTable::default()));
 

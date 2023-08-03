@@ -2,6 +2,8 @@
 
 use std::sync::Arc;
 
+use serde::{Serialize, Deserialize};
+
 use crate::date::Date;
 use crate::parse::pdxfile::{parse_pdx_macro, LocalMacros};
 use crate::token::{Loc, Token};
@@ -32,7 +34,7 @@ pub use crate::block::field::Field;
 /// The same key can occur multiple times in a block. If a single field is requested and its key
 /// occurs multiple times, the last instance is returned (which is how the game usually resolves
 /// this).
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Block {
     /// The contents of this block.
     v: Vec<BlockItem>,
